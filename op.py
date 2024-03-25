@@ -1,108 +1,44 @@
-import os
+# import os
 import bpy
+from .bake import setup_bake_image, setup_bake_nodes, setup_bake_uv, cleanup_bake_nodes
+from .material import setup_bake_material
 
 import logging
 
 _l = logging.getLogger(__name__)
 
 
-def setup_bake_nodes(obj):
-    """Create material nodes required for baking."""
-    _l.info('Creating bake nodes for object %s', obj.name)
-
-    bake_nodes = []
-    for mat in obj.data.materials:
-        _l.debug('Creating nodes for material %s', mat.name)
-
-        mat.use_nodes = True
-        nodes = mat.node_tree.nodes
-        texture_node = nodes.new('ShaderNodeTexImage')
-        texture_node.name = 'Bake_node'
-        texture_node.select = True
-        nodes.active = texture_node
-        bake_nodes.append(texture_node)
-
-    return bake_nodes
-
-
-def cleanup_bake_nodes(obj):
-    """Remove material nodes created for baking by setup_bake_nodes."""
-    _l.info('Cleaning up bake nodes for object %s', obj.name)
-
-    for mat in obj.data.materials:
-        _l.debug('Clean up nodes for material %s', mat.name)
-
-        for n in mat.node_tree.nodes:
-            if n.name == 'Bake_node':
-                _l.debug('Remove bake node %s', n.name)
-                mat.node_tree.nodes.remove(n)
-
-
-def setup_bake_uv(obj, name):
-    """Create a uv layer to unwrap obj for baking."""
-    _l.info('Creating uv layer %s for baking', name)
-
-    def unwrap_uv(obj, uv):
-        _l.info('Unwrapping object %s to layer %s', obj.name, uv.name)
-
-        active_layer = None
-        for layer in obj.data.uv_layers:
-            if layer.active:
-                _l.debug('Found active layer %s', layer.name)
-                active_layer = layer
-                break
-
-        uv.active = True
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.smart_project(island_margin=0.001)
-        bpy.ops.object.mode_set(mode='OBJECT')
-        uv.active = False
-
-        if active_layer is not None:
-            _l.debug('Restoring active layer %s', active_layer.name)
-            active_layer.active = True  # type: ignore
-
-    bake_uv = obj.data.uv_layers.get(name)
-    if bake_uv is None:
-        bake_uv = obj.data.uv_layers.new(name=name)
-        unwrap_uv(obj, bake_uv)
-
-    else:
-        _l.debug('Using existing uv layer')
-
-    return bake_uv
-
-
-def setup_bake_image(obj, bake_nodes, bake_name, pass_name, reuse_tex):
-    _l.info('Creating image for baking object %s', obj.name)
-
-    image_name = obj.name + '_' + bake_name + '_' + pass_name
-    _l.debug('Image name %s', image_name)
-
-    img = bpy.data.images.get(image_name)
-    if img is None or not reuse_tex:
-        img = bpy.data.images.new(image_name, 1024, 1024)
-
-    else:
-        _l.debug('Using existing image')
-
-    for node in bake_nodes:
-        node.image = img
-
-    return img
-
-
 class QuickBake_OT_bake(bpy.types.Operator):
-    """Do the bake."""
-    bl_idname = "render.quickbake_bake"
-    bl_label = "Bake"
+    '''Do the bake.'''
+    bl_idname = 'render.quickbake_bake'
+    bl_label = 'Bake'
     bl_options = {'REGISTER', 'UNDO'}
+
+    # material:
 
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
+        obj: bpy.types.Object = context.active_object  # type: ignore
         return (obj is not None and obj.type == 'MESH')
+
+    def create_material(self,
+                        obj,
+                        name,
+                        uv_name,
+                        diffuse=None,
+                        roughness=None,
+                        normal=None):
+        _l.info('Creating bake material %s for object %s', name, obj.name)
+
+        mat = bpy.data.materials.get(name)
+        if mat is not None:
+            _l.debug('Material already exists, skipping')
+            self.report({'INFO'}, 'Material already exists, skipping')
+            return mat
+
+        mat = setup_bake_material(
+            obj, name, uv_name, diffuse, roughness, normal)
+        return mat
 
     def execute(self, context):
         obj = context.active_object
@@ -146,14 +82,20 @@ class QuickBake_OT_bake(bpy.types.Operator):
 
         _l.debug('Enabled bake passes: %s', repr(passes))
 
+        img_cache = {}
+
         for pass_type in passes:
             _l.info('Baking pass %s', pass_type)
 
             img = setup_bake_image(obj,
                                    bake_nodes,
                                    props.bake_name,
+                                   props.bake_size,
                                    pass_type.lower(),
-                                   props.reuse_tex)
+                                   props.reuse_tex,
+                                   pass_type == 'NORMAL')
+
+            img_cache[pass_type] = img
 
             self.report({'INFO'}, 'Baking pass %s' % pass_type)
 
@@ -194,7 +136,15 @@ class QuickBake_OT_bake(bpy.types.Operator):
 
         self.report({'INFO'}, 'Baking complete')
 
-        if props.clean_up:
+        if props.clean_up and not props.create_mat:
             cleanup_bake_nodes(obj)
+
+        if props.create_mat:
+            self.create_material(obj,
+                                 props.mat_name,
+                                 props.bake_uv,
+                                 img_cache.get('DIFFUSE'),
+                                 img_cache.get('ROUGHNESS'),
+                                 img_cache.get('NORMAL'))
 
         return {'FINISHED'}

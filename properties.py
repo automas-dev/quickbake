@@ -14,6 +14,18 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         default=True
     )
 
+    create_mat: bpy.props.BoolProperty(  # type: ignore
+        name="Create Material",
+        description="Create a material after baking and assign it.",
+        default=True
+    )
+
+    mat_name: bpy.props.StringProperty(  # type: ignore
+        name="Name",
+        description="Name used to create a new material after baking",
+        default="BakeMaterial"
+    )
+
     save_img: bpy.props.BoolProperty(  # type: ignore
         name="Save Images",
         description="Write images to file after baking",
@@ -37,6 +49,14 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         name="UV",
         description="Name used fot the uv bake layer",
         default="bake_uv"
+    )
+
+    bake_size: bpy.props.IntProperty(  # type: ignore
+        name="Size",
+        description="Resolution for the bake texture",
+        default=1024,
+        soft_min=1024,
+        step=1024
     )
 
     diffuse_enabled: bpy.props.BoolProperty(  # type: ignore
