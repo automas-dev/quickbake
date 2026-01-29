@@ -40,7 +40,7 @@ jobs:
   build_release:
     name: Build Release
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
+    # if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
 
     needs: lint_test
 
