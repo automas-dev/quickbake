@@ -40,9 +40,9 @@ jobs:
   build_release:
     name: Build Release
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
 
-    # needs: lint_test
+    needs: lint_test
 
     permissions:
       contents: write
@@ -64,17 +64,14 @@ jobs:
 
       - name: Set Version
         env:
-          # VERSION: ${{ steps.version.outputs.version }}
-          VERSION: "0.0.0"
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           uv version $VERSION
           sed -i "s/DEV_BUILD/${VERSION}/g" src/quickbake/blender_manifest.toml
-          sed -i "s/DEV_BUILD/${VERSION}/g" src/quickbake/__init__.py
 
       - name: Create Archive
         env:
-          # VERSION: ${{ steps.version.outputs.version }}
-          VERSION: "0.0.0"
+          VERSION: ${{ steps.version.outputs.version }}
         working-directory: ./src/quickbake
         run: |
           zip quickbake-${VERSION}.zip *
@@ -82,9 +79,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          # artifacts: src/quickbake/quickbake-${{ steps.version.outputs.version }}.zip
-          artifacts: src/quickbake/quickbake-0.0.0.zip
+          artifacts: src/quickbake/quickbake-${{ steps.version.outputs.version }}.zip
           makeLatest: true
           generateReleaseNotes: true
-          # tag: ${{ steps.version.outputs.version }}
-          tag: "0.0.0"
+          tag: ${{ steps.version.outputs.version }}
