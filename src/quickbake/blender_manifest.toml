@@ -5,8 +5,8 @@ schema_version = "1.0.0"
 id = "quickbake"
 # the value DEV_BUILD is replaced with the version string by ci
 version = "DEV_BUILD"
-name = "Fast baking for blender"
-tagline = "This is another extension"
+name = "Quick Bake"
+tagline = "Fast baking for blender"
 maintainer = "Thomas Harrison <theharrisoncrafter@gmail.com>"
 type = "add-on"
 
