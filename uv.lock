@@ -1,0 +1,27 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "fake-bpy-module"
+version = "20260128"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/75/4b888290501a90adf25d8d9b33ce208a5bd8f170d6795ac12cea4215b189/fake_bpy_module-20260128.tar.gz", hash = "sha256:15cec0640eb7876db332b785e41d82cd460e0d9b88d1f470e52a71c97e3fb796", size = 906262, upload-time = "2026-01-28T06:23:12.056Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/6a/0e7d282b4b3f1dc4a45662b7202b59a7e570be934572959da85887607bbb/fake_bpy_module-20260128-py3-none-any.whl", hash = "sha256:6ddcaa2b2e04af6008398335b79fab7a280ba1a0fb76d950290676da366e2d33", size = 1037509, upload-time = "2026-01-28T06:23:10.654Z" },
+]
+
+[[package]]
+name = "quickbake"
+version = "0.1.0"
+source = { editable = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "fake-bpy-module" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "fake-bpy-module", specifier = ">=20260128" }]
