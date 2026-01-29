@@ -1,9 +1,9 @@
 """Material helper functions."""
 
+import logging
+
 import bpy
 from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
-
-import logging
 
 _l = logging.getLogger(__name__)
 

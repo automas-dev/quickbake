@@ -1,11 +1,9 @@
 [project]
 name = "quickbake"
 version = "0.1.0"
-description = "Add your description here"
+description = "Fast baking for blender"
 readme = "README.md"
-authors = [
-    { name = "Thomas Harrison", email = "theharrisoncrafter@gmail.com" }
-]
+authors = [{ name = "Thomas Harrison", email = "theharrisoncrafter@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = []
 
@@ -15,5 +13,31 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "coverage>=7.13.2",
     "fake-bpy-module>=20260128",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.14",
 ]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+ignore = ["F401"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "--cov=src --cov-branch --cov-fail-under=100"
+
+[tool.coverage.run]
+branch = false
+source = ["src"]
+
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100

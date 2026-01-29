@@ -1,8 +1,8 @@
 """Baking helper functions."""
 
-import bpy
-
 import logging
+
+import bpy
 
 _l = logging.getLogger(__name__)
 

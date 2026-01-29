@@ -1,2 +1,12 @@
 {
+    "python.testing.pytestArgs": [
+        "tests",
+        "--cov=src",
+        "--cov=branch"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
 }

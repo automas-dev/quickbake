@@ -1,0 +1,85 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  lint_test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install Dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run --frozen ruff check .
+
+      # - name: Test
+      # TODO everything after pytest might not be needed
+      #   run: uv run --frozen pytest tests --cov=src --cov-branch --cov-fail-under=100
+
+  build_release:
+    name: Build Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
+
+    needs: lint_test
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Increment Version
+        uses: automas-dev/reusable-workflows/increment_version@main
+        id: version
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set Version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          uv version $VERSION
+          sed -i "s/DEV_BUILD/${VERSION}/g" src/quickbake/blender_manifest.toml
+
+      - name: Create Archive
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        working-directory: ./src/quickbake
+        run: |
+          zip quickbake-${VERSION}.zip *
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          artifacts: src/quickbake/quickbake-${VERSION}.zip
+          makeLatest: true
+          generateReleaseNotes: true
+          tag: ${{ steps.version.outputs.version }}
