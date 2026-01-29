@@ -1,8 +1,12 @@
 {
-    "python.autoComplete.extraPaths": [
-        "/usr/share/blender/3.6/scripts/modules"
+    "python.testing.pytestArgs": [
+        "tests",
+        "--cov=src",
+        "--cov=branch"
     ],
-    "python.analysis.extraPaths": [
-        "/usr/share/blender/3.6/scripts/modules"
-    ]
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
 }

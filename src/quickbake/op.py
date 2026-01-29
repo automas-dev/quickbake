@@ -1,15 +1,17 @@
 # import os
-import bpy
-from .bake import setup_bake_image, setup_bake_nodes, setup_bake_uv, cleanup_bake_nodes
-from .material import setup_bake_material
-
 import logging
+
+import bpy
+
+from .bake import cleanup_bake_nodes, setup_bake_image, setup_bake_nodes, setup_bake_uv
+from .material import setup_bake_material
 
 _l = logging.getLogger(__name__)
 
 
 class QuickBake_OT_bake(bpy.types.Operator):
-    '''Do the bake.'''
+    """Do the bake."""
+
     bl_idname = 'render.quickbake_bake'
     bl_label = 'Bake'
     bl_options = {'REGISTER', 'UNDO'}
@@ -19,15 +21,11 @@ class QuickBake_OT_bake(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         obj: bpy.types.Object = context.active_object  # type: ignore
-        return (obj is not None and obj.type == 'MESH')
+        return obj is not None and obj.type == 'MESH'
 
-    def create_material(self,
-                        obj,
-                        name,
-                        uv_name,
-                        diffuse=None,
-                        roughness=None,
-                        normal=None):
+    def create_material(
+        self, obj, name, uv_name, diffuse=None, roughness=None, normal=None
+    ):
         _l.info('Creating bake material %s for object %s', name, obj.name)
 
         mat = bpy.data.materials.get(name)
@@ -36,8 +34,7 @@ class QuickBake_OT_bake(bpy.types.Operator):
             self.report({'INFO'}, 'Material already exists, skipping')
             return mat
 
-        mat = setup_bake_material(
-            obj, name, uv_name, diffuse, roughness, normal)
+        mat = setup_bake_material(obj, name, uv_name, diffuse, roughness, normal)
         return mat
 
     def execute(self, context):
@@ -54,7 +51,8 @@ class QuickBake_OT_bake(bpy.types.Operator):
         props = context.scene.QuickBakeToolPropertyGroup
 
         bake_nodes = setup_bake_nodes(obj)
-        bake_uv = setup_bake_uv(obj, props.bake_uv)
+        # bake_uv = setup_bake_uv(obj, props.bake_uv)
+        setup_bake_uv(obj, props.bake_uv)
 
         passes = []
         if props.diffuse_enabled:
@@ -87,13 +85,15 @@ class QuickBake_OT_bake(bpy.types.Operator):
         for pass_type in passes:
             _l.info('Baking pass %s', pass_type)
 
-            img = setup_bake_image(obj,
-                                   bake_nodes,
-                                   props.bake_name,
-                                   props.bake_size,
-                                   pass_type.lower(),
-                                   props.reuse_tex,
-                                   pass_type == 'NORMAL')
+            img = setup_bake_image(
+                obj,
+                bake_nodes,
+                props.bake_name,
+                props.bake_size,
+                pass_type.lower(),
+                props.reuse_tex,
+                pass_type == 'NORMAL',
+            )
 
             img_cache[pass_type] = img
 
@@ -103,7 +103,7 @@ class QuickBake_OT_bake(bpy.types.Operator):
             bpy.context.view_layer.objects.active = obj
 
             save_mode = 'INTERNAL'
-            filepath = ''
+            # filepath = ''
 
             # if props.save_img:
             #     _l.debug('Saving image externally')
@@ -116,14 +116,15 @@ class QuickBake_OT_bake(bpy.types.Operator):
 
             self.report({'INFO'}, 'Save mode %s' % save_mode)
 
-            bpy.ops.object.bake(type=pass_type,
-                                pass_filter={'COLOR'},
-                                uv_layer='bake_uv',
-                                use_clear=True,
-                                # save_mode='INTERNAL',
-                                # save_mode=save_mode,
-                                # filepath=filepath,
-                                )
+            bpy.ops.object.bake(
+                type=pass_type,
+                pass_filter={'COLOR'},
+                uv_layer='bake_uv',
+                use_clear=True,
+                # save_mode='INTERNAL',
+                # save_mode=save_mode,
+                # filepath=filepath,
+            )
 
             # if props.save_img:
             #     _l.debug('Saving image externally %s', img.name)
@@ -140,11 +141,13 @@ class QuickBake_OT_bake(bpy.types.Operator):
             cleanup_bake_nodes(obj)
 
         if props.create_mat:
-            self.create_material(obj,
-                                 props.mat_name,
-                                 props.bake_uv,
-                                 img_cache.get('DIFFUSE'),
-                                 img_cache.get('ROUGHNESS'),
-                                 img_cache.get('NORMAL'))
+            self.create_material(
+                obj,
+                props.mat_name,
+                props.bake_uv,
+                img_cache.get('DIFFUSE'),
+                img_cache.get('ROUGHNESS'),
+                img_cache.get('NORMAL'),
+            )
 
         return {'FINISHED'}
