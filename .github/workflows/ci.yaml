@@ -64,14 +64,16 @@ jobs:
 
       - name: Set Version
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          # VERSION: ${{ steps.version.outputs.version }}
+          VERSION: "0.0.0"
         run: |
           uv version $VERSION
           sed -i "s/DEV_BUILD/${VERSION}/g" src/quickbake/blender_manifest.toml
 
       - name: Create Archive
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          # VERSION: ${{ steps.version.outputs.version }}
+          VERSION:  "0.0.0"
         working-directory: ./src/quickbake
         run: |
           zip quickbake-${VERSION}.zip *
