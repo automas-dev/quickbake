@@ -2,6 +2,14 @@
 
 Sweet and simple baking in Blender.
 
+**ToDo**
+
+- [ ] Add docs for how to download from release
+- [ ] Better docs for plugin / options / how outputs work
+- [ ] Proper docs site
+- [ ] Tests + Coverage
+- [ ] Can any blender extension code become more modern?
+
 ## Usage
 
 Download this repo as a zip file and install through the Blender addons.
