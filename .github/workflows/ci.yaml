@@ -67,7 +67,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           uv version $VERSION
-          sed -i "s/DEV_BUILD/${VERSION}/g" src/quickbake/blender_manifest.toml
+          sed -i "s/^version = \"[^\"]\+\"$/version=\"${VERSION}\"/g" src/quickbake/blender_manifest.toml
 
       - name: Create Archive
         env:
