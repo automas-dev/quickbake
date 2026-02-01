@@ -54,19 +54,10 @@ jobs:
         uses: automas-dev/reusable-workflows/increment_version@main
         id: version
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: .python-version
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v7
-
       - name: Set Version
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          uv version $VERSION
           sed -i "s/^version = \"[^\"]\+\"$/version=\"${VERSION}\"/g" src/quickbake/blender_manifest.toml
 
       - name: Create Archive
