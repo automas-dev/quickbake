@@ -8,15 +8,18 @@ from .op import QuickBake_OT_bake
 class QuickBake_PT_main(bpy.types.Panel):
     """Creates a Sub-Panel in the Property Area of the 3D View."""
 
-    bl_label = "Quick Bake"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Tool"
-    bl_context = "objectmode"
+    bl_label = 'Quick Bake'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Tool'
+    bl_context = 'objectmode'
 
     def draw(self, context):
         """Override Panel draw method."""
         layout = self.layout
+        assert layout is not None, 'Missing layout'
+
+        assert context.scene is not None, 'Missing scene from context'
 
         row = layout.row()
         row.operator(QuickBake_OT_bake.bl_idname)
@@ -26,31 +29,31 @@ class QuickBake_PT_main(bpy.types.Panel):
 
         layout.label(text='Texture')
         row = layout.row()
-        row.prop(props, "bake_name")
+        row.prop(props, 'bake_name')
 
         row = layout.row()
-        row.prop(props, "bake_uv")
+        row.prop(props, 'bake_uv')
 
         row = layout.row()
-        row.prop(props, "bake_size")
+        row.prop(props, 'bake_size')
 
         layout.separator()
         layout.label(text='Material')
         row = layout.row()
-        row.prop(props, "create_mat")
+        row.prop(props, 'create_mat')
 
         row = layout.row()
-        row.prop(props, "mat_name")
+        row.prop(props, 'mat_name')
 
         layout.separator()
         layout.label(text='Options')
         row = layout.row()
         row.enabled = not props.create_mat
-        row.prop(props, "reuse_tex")
+        row.prop(props, 'reuse_tex')
 
         row = layout.row()
         row.enabled = not props.create_mat
-        row.prop(props, "clean_up")
+        row.prop(props, 'clean_up')
 
         # layout.separator()
         # layout.label(text='Output')

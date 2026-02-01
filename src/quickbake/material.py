@@ -8,7 +8,9 @@ from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 _l = logging.getLogger(__name__)
 
 
-def setup_bake_material(obj, name, bake_uv_name, diffuse=None, roughness=None, normal=None):
+def setup_bake_material(
+    obj, name, bake_uv_name, diffuse=None, roughness=None, normal=None
+):
     _l.info('Creating material %s for object %s', name, obj.name)
 
     mat = bpy.data.materials.get(name)
@@ -53,13 +55,11 @@ def setup_bake_material(obj, name, bake_uv_name, diffuse=None, roughness=None, n
 
     if diffuse is not None:
         diff_node = make_tex_node(diffuse, 400)
-        links.new(diff_node.outputs['Color'],
-                  principled_node.inputs['Base Color'])
+        links.new(diff_node.outputs['Color'], principled_node.inputs['Base Color'])
 
     if roughness is not None:
         rough_node = make_tex_node(roughness, 100)
-        links.new(rough_node.outputs['Color'],
-                  principled_node.inputs['Roughness'])
+        links.new(rough_node.outputs['Color'], principled_node.inputs['Roughness'])
 
     if normal is not None:
         norm_node = make_tex_node(normal, -200)
@@ -67,7 +67,6 @@ def setup_bake_material(obj, name, bake_uv_name, diffuse=None, roughness=None, n
         norm_map_node.location.x -= 200
         norm_map_node.location.y -= 200
         links.new(norm_node.outputs['Color'], norm_map_node.inputs['Color'])
-        links.new(norm_map_node.outputs['Normal'],
-                  principled_node.inputs['Normal'])
+        links.new(norm_map_node.outputs['Normal'], principled_node.inputs['Normal'])
 
     return mat

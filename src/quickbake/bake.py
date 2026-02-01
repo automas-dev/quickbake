@@ -8,7 +8,7 @@ _l = logging.getLogger(__name__)
 
 
 def setup_bake_nodes(obj):
-    '''Create material nodes required for baking.'''
+    """Create material nodes required for baking."""
     _l.info('Creating bake nodes for object %s', obj.name)
 
     bake_nodes = []
@@ -27,7 +27,7 @@ def setup_bake_nodes(obj):
 
 
 def cleanup_bake_nodes(obj):
-    '''Remove material nodes created for baking by setup_bake_nodes.'''
+    """Remove material nodes created for baking by setup_bake_nodes."""
     _l.info('Cleaning up bake nodes for object %s', obj.name)
 
     for mat in obj.data.materials:
@@ -40,7 +40,7 @@ def cleanup_bake_nodes(obj):
 
 
 def setup_bake_uv(obj, name):
-    '''Create a uv layer to unwrap obj for baking.'''
+    """Create a uv layer to unwrap obj for baking."""
     _l.info('Creating uv layer %s for baking', name)
 
     def unwrap_uv(obj, uv):
@@ -75,7 +75,9 @@ def setup_bake_uv(obj, name):
     return bake_uv
 
 
-def setup_bake_image(obj, bake_nodes, bake_name, bake_size, pass_name, reuse_tex, is_data=False):
+def setup_bake_image(
+    obj, bake_nodes, bake_name, bake_size, pass_name, reuse_tex, is_data=False
+):
     _l.info('Creating image for baking object %s', obj.name)
 
     image_name = obj.name + '_' + bake_name + '_' + pass_name

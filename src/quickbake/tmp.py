@@ -16,7 +16,6 @@ else:
 
 # Due to the presence of any multiple materials, it seems necessary to iterate on all the materials, and assign them a node + the image to bake.
 for mat in obj.data.materials:
-
     mat.use_nodes = True  # Here it is assumed that the materials have been created with nodes, otherwise it would not be possible to assign a node for the Bake, so this step is a bit useless
     nodes = mat.node_tree.nodes
     texture_node = nodes.new('ShaderNodeTexImage')
