@@ -3,8 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "quickbake"
-# the value DEV_BUILD is replaced with the version string by ci
-version = "DEV_BUILD"
+version = "0.0.0"
 name = "Quick Bake"
 tagline = "Fast baking for blender"
 maintainer = "Thomas Harrison <theharrisoncrafter@gmail.com>"
