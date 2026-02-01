@@ -7,11 +7,11 @@ setup:
 
 build_dev:
 	@mkdir -p release/
-	@cd src/quickbake && zip $(PWD)/release/$(ZIP_ARCHIVE_NAME) *
+	@cd quickbake/ && zip $(PWD)/release/$(ZIP_ARCHIVE_NAME) *
 
 install:
 	rm -rf $(INSTALL_DIR)/*
-	cp -r src/quickbake/* $(INSTALL_DIR)/
+	cp -r quickbake/* $(INSTALL_DIR)/
 
 run: install
 	blender

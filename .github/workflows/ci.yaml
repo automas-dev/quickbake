@@ -60,19 +60,19 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          sed -i "s/^version = \"[^\"]\+\"$/version=\"${VERSION}\"/g" src/quickbake/blender_manifest.toml
+          sed -i "s/^version = \"[^\"]\+\"$/version=\"${VERSION}\"/g" quickbake/blender_manifest.toml
 
       - name: Create Archive
         env:
           VERSION: ${{ steps.version.outputs.version }}
-        working-directory: ./src/quickbake
+        working-directory: ./quickbake
         run: |
           zip quickbake-${VERSION}.zip *
 
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: src/quickbake/quickbake-${{ steps.version.outputs.version }}.zip
+          artifacts: quickbake/quickbake-${{ steps.version.outputs.version }}.zip
           makeLatest: true
           generateReleaseNotes: true
           tag: ${{ steps.version.outputs.version }}

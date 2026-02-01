@@ -1,8 +1,8 @@
 {
     "python.testing.pytestArgs": [
         "tests",
-        "--cov=src",
-        "--cov=branch"
+        "--cov",
+        "--cov-branch"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
