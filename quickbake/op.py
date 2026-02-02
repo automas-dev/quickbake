@@ -48,7 +48,7 @@ class QuickBake_OT_bake(bpy.types.Operator):
             self.report({'ERROR'}, 'Active object must be a mesh')
             return {'CANCELLED'}
 
-        props = context.scene.QuickBakeToolPropertyGroup
+        props = context.scene.QuickBakeToolPropertyGroup  # type: ignore
 
         bake_nodes = setup_bake_nodes(obj)
         # bake_uv = setup_bake_uv(obj, props.bake_uv)

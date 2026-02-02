@@ -9,7 +9,7 @@ def register():
     bpy.utils.register_class(QuickBake_OT_bake)
     bpy.utils.register_class(QuickBake_PT_main)
     bpy.utils.register_class(QuickBakeToolPropertyGroup)
-    bpy.types.Scene.QuickBakeToolPropertyGroup = bpy.props.PointerProperty(
+    bpy.types.Scene.QuickBakeToolPropertyGroup = bpy.props.PointerProperty(  # type: ignore
         type=QuickBakeToolPropertyGroup
     )
 
@@ -18,7 +18,7 @@ def unregister():
     bpy.utils.unregister_class(QuickBake_OT_bake)
     bpy.utils.unregister_class(QuickBake_PT_main)
     bpy.utils.unregister_class(QuickBakeToolPropertyGroup)
-    del bpy.types.Scene.QuickBakeToolPropertyGroup
+    del bpy.types.Scene.QuickBakeToolPropertyGroup  # type: ignore
 
 
 if __name__ == '__main__':
