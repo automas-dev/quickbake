@@ -13,7 +13,7 @@ dependencies = [
 
 [tool.ruff.lint]
 extend-select = ["I"]
-ignore = ["F401"]
+ignore = ["F401", "I001"]
 
 [tool.ruff.format]
 quote-style = "single"
