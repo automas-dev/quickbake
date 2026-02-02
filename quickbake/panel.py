@@ -3,6 +3,7 @@
 import bpy
 
 from .op import QuickBake_OT_bake
+from .properties import QuickBakeToolPropertyGroup
 
 
 class QuickBake_PT_main(bpy.types.Panel):
@@ -24,8 +25,8 @@ class QuickBake_PT_main(bpy.types.Panel):
         row = layout.row()
         row.operator(QuickBake_OT_bake.bl_idname)
         layout.separator()
-
-        props = context.scene.QuickBakeToolPropertyGroup
+        
+        props = context.scene.QuickBakeToolPropertyGroup  # type: ignore
 
         layout.label(text='Texture')
         row = layout.row()

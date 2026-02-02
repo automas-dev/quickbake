@@ -1,14 +1,9 @@
 [project]
 name = "quickbake"
-version = "0.1.0"
-description = "Fast baking for blender"
-readme = "README.md"
-authors = [{ name = "Thomas Harrison", email = "theharrisoncrafter@gmail.com" }]
+version = "0.9.0"
+description = "Python environment for testing and linting plugin code"
 requires-python = ">=3.12"
-dependencies = []
-
-[dependency-groups]
-dev = [
+dependencies = [
     "coverage>=7.13.2",
     "fake-bpy-module>=20260128",
     "pytest>=9.0.2",
