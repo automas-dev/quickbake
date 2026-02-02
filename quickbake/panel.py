@@ -1,9 +1,7 @@
 """QuickBake n Menu."""
 
 import bpy
-
 from .op import QuickBake_OT_bake
-from .properties import QuickBakeToolPropertyGroup
 
 
 class QuickBake_PT_main(bpy.types.Panel):
@@ -12,31 +10,47 @@ class QuickBake_PT_main(bpy.types.Panel):
     bl_label = 'Quick Bake'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Tool'
+    # bl_category = 'Tool'
+    bl_category = 'Item'  # TODO revert this after testing
     bl_context = 'objectmode'
 
     def draw(self, context):
         """Override Panel draw method."""
         layout = self.layout
-        assert layout is not None, 'Missing layout'
+        scene = context.scene
 
-        assert context.scene is not None, 'Missing scene from context'
+        # Make types happy
+        assert layout is not None, 'Missing layout from parent Panel'
+        assert scene is not None, 'Missing scene from context'
 
+        props = scene.QuickBakeToolPropertyGroup  # type: ignore
+
+        # This is the bake button
         row = layout.row()
         row.operator(QuickBake_OT_bake.bl_idname)
-        layout.separator()
-        
-        props = context.scene.QuickBakeToolPropertyGroup  # type: ignore
 
-        layout.label(text='Texture')
         row = layout.row()
         row.prop(props, 'bake_name')
 
         row = layout.row()
         row.prop(props, 'bake_uv')
+        # Probably not useful, select from list of existing uv maps
+        # me = context.object.data
+        # row.template_list("MESH_UL_uvmaps", "uvmaps", me, "uv_layers", me.uv_layers, "active_index", rows=2)
 
         row = layout.row()
         row.prop(props, 'bake_size')
+
+        row = layout.row()
+        row.prop(props, 'combine_arm')
+
+        row = layout.row()
+        row.enabled = False
+        row.prop(props, 'save_img')
+
+        row = layout.row()
+        row.enabled = False
+        row.prop(props, 'image_path')
 
         layout.separator()
         layout.label(text='Material')
@@ -47,56 +61,45 @@ class QuickBake_PT_main(bpy.types.Panel):
         row.prop(props, 'mat_name')
 
         layout.separator()
-        layout.label(text='Options')
-        row = layout.row()
-        row.enabled = not props.create_mat
-        row.prop(props, 'reuse_tex')
-
-        row = layout.row()
-        row.enabled = not props.create_mat
-        row.prop(props, 'clean_up')
-
-        # layout.separator()
-        # layout.label(text='Output')
-        # row = layout.row()
-        # row.prop(props, "save_img")
-
-        # row = layout.row()
-        # row.prop(props, "image_path")
-
-        layout.separator()
         layout.label(text='Layers')
         row = layout.row()
         row.prop(props, 'diffuse_enabled')
 
         row = layout.row()
-        row.prop(props, 'normal_enabled')
-
-        row = layout.row()
         row.prop(props, 'roughness_enabled')
 
         row = layout.row()
+        row.prop(props, 'normal_enabled')
+
+        row = layout.row()
+        row.prop(props, 'metallic_enabled')
+
+        row = layout.row()
+        row.enabled = False
+        row.prop(props, 'clearcoat_enabled')
+
+        row = layout.row()
+        row.enabled = False
+        row.prop(props, 'anisotropic_enabled')
+
+        row = layout.row()
+        row.enabled = False
         row.prop(props, 'ao_enabled')
 
         row = layout.row()
+        row.enabled = False
         row.prop(props, 'shadow_enabled')
 
         row = layout.row()
-        row.prop(props, 'position_enabled')
+        row.enabled = False
+        row.prop(props, 'height_enabled')
 
         row = layout.row()
-        row.prop(props, 'uv_enabled')
-
-        row = layout.row()
+        row.enabled = False
         row.prop(props, 'emit_enabled')
 
         row = layout.row()
-        row.prop(props, 'environment_enabled')
-
-        row = layout.row()
-        row.prop(props, 'glossy_enabled')
-
-        row = layout.row()
+        row.enabled = False
         row.prop(props, 'transmission_enabled')
 
         row = layout.row()

@@ -3,17 +3,48 @@ import bpy
 
 
 class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
-    reuse_tex: bpy.props.BoolProperty(
-        name='Re-use Texture',
-        description='Use the texture from previous bakes',
-        default=True,
+    # Bake
+
+    bake_name: bpy.props.StringProperty(
+        name='Name',
+        description='Name used for the baked texture images',
+        default='BakeTexture',
     )
 
-    clean_up: bpy.props.BoolProperty(
-        name='Clean Up',
-        description='Remove generated nodes after baking',
-        default=True,
+    bake_uv: bpy.props.StringProperty(
+        name='UV',
+        description='Name used for the uv bake layer',
+        default='bake_uv',
     )
+
+    bake_size: bpy.props.IntProperty(
+        name='Size',
+        description='Resolution for the bake texture',
+        default=1024,
+        soft_min=1024,
+        step=1024,  # not yet implemented
+    )
+
+    combine_arm: bpy.props.BoolProperty(
+        name='Combine ARM Images',
+        description='Combine ambient occlusion, roughness and metallic into a single image',
+        default=False,
+    )
+
+    save_img: bpy.props.BoolProperty(
+        name='Save Images',
+        description='Write images to file after baking',
+        default=False,
+    )
+
+    image_path: bpy.props.StringProperty(
+        name='Image Path',
+        description='Directory for baking output',
+        default='',
+        subtype='DIR_PATH',
+    )
+
+    # Material
 
     create_mat: bpy.props.BoolProperty(
         name='Create Material',
@@ -27,48 +58,29 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         default='BakeMaterial',
     )
 
-    save_img: bpy.props.BoolProperty(
-        name='Save Images',
-        description='Write images to file after baking',
-        default=False,
-    )
+    # Layers
 
-    image_path: bpy.props.StringProperty(
-        name='Texture Path',
-        description='Directory for baking output',
-        default='',
-        subtype='DIR_PATH',
-    )
+    """Godot mapping
+    Diffuse -> Albedo
+    -> Metallic
+    -> Roughness
+    -> Normal
+    -> Clearcoat
+    -> Anisotropy
+    -> Ambient Occlusion
+    -> Height
+    -> Subsurface Scatter
+    TODO IOR? -> Refraction
+    -> Emission
+    Alpha -> Transparency
+    Transmission -> None
 
-    bake_name: bpy.props.StringProperty(
-        name='Name',
-        description='Name used fot the baked texture images',
-        default='BakeTexture',
-    )
-
-    bake_uv: bpy.props.StringProperty(
-        name='UV',
-        description='Name used fot the uv bake layer',
-        default='bake_uv',
-    )
-
-    bake_size: bpy.props.IntProperty(
-        name='Size',
-        description='Resolution for the bake texture',
-        default=1024,
-        soft_min=1024,
-        step=1024,
-    )
+    TODO - ARM
+    """
 
     diffuse_enabled: bpy.props.BoolProperty(
         name='Diffuse',
         description='Bake the diffuse map',
-        default=True,
-    )
-
-    normal_enabled: bpy.props.BoolProperty(
-        name='Normal',
-        description='Bake the normal map',
         default=True,
     )
 
@@ -78,45 +90,52 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         default=True,
     )
 
-    ao_enabled: bpy.props.BoolProperty(
-        name='Ao',
-        description='Bake the Ao map',
+    normal_enabled: bpy.props.BoolProperty(
+        name='Normal',
+        description='Bake the normal map',
+        default=True,
+    )
+
+    metallic_enabled: bpy.props.BoolProperty(
+        name='Metallic',
+        description='Bake the metallic map',
         default=False,
     )
 
+    clearcoat_enabled: bpy.props.BoolProperty(
+        name='Clearcoat',
+        description='Bake the clearcoat map',
+        default=False,
+    )
+
+    anisotropic_enabled: bpy.props.BoolProperty(
+        name='Anisotropic',
+        description='Bake the anisotropic map',
+        default=False,
+    )
+
+    ao_enabled: bpy.props.BoolProperty(
+        name='Ambient Occlusion',
+        description='Bake the ambient occlusion map',
+        default=False,
+    )
+
+    # TODO is this real?
     shadow_enabled: bpy.props.BoolProperty(
         name='Shadow',
-        description='Bake the Shadow map',
+        description='Bake the shadow map',
         default=False,
     )
 
-    position_enabled: bpy.props.BoolProperty(
-        name='Position',
-        description='Bake the Position map',
-        default=False,
-    )
-
-    uv_enabled: bpy.props.BoolProperty(
-        name='Uv',
-        description='Bake the Uv map',
+    height_enabled: bpy.props.BoolProperty(
+        name='Height',
+        description='Bake the height map',
         default=False,
     )
 
     emit_enabled: bpy.props.BoolProperty(
         name='Emit',
         description='Bake the Emit map',
-        default=False,
-    )
-
-    environment_enabled: bpy.props.BoolProperty(
-        name='Environment',
-        description='Bake the Environment map',
-        default=False,
-    )
-
-    glossy_enabled: bpy.props.BoolProperty(
-        name='Glossy',
-        description='Bake the Glossy map',
         default=False,
     )
 
