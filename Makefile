@@ -14,7 +14,7 @@ install:
 	cp -r quickbake/* $(INSTALL_DIR)/
 
 run: install
-	blender
+	blender "example/Metal Box.blend"
 
 checks: lint test
 

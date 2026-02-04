@@ -16,7 +16,8 @@ extend-select = ["I"]
 ignore = ["F401", "I001"]
 
 [tool.ruff.format]
-quote-style = "single"
+# bpy specifies this https://docs.blender.org/api/current/info_best_practice.html#style-conventions
+quote-style = "double"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

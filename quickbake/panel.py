@@ -1,18 +1,19 @@
 """QuickBake n Menu."""
 
 import bpy
-from .op import QuickBake_OT_bake
+from .op import RENDER_OT_bake
+from .properties import SaveMode
 
 
-class QuickBake_PT_main(bpy.types.Panel):
+class RENDER_PT_main(bpy.types.Panel):
     """Creates a Sub-Panel in the Property Area of the 3D View."""
 
-    bl_label = 'Quick Bake'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_label = "Quick Bake"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
     # bl_category = 'Tool'
-    bl_category = 'Item'  # TODO revert this after testing
-    bl_context = 'objectmode'
+    bl_category = "Item"  # TODO revert this after testing
+    bl_context = "objectmode"
 
     def draw(self, context):
         """Override Panel draw method."""
@@ -20,86 +21,85 @@ class QuickBake_PT_main(bpy.types.Panel):
         scene = context.scene
 
         # Make types happy
-        assert layout is not None, 'Missing layout from parent Panel'
-        assert scene is not None, 'Missing scene from context'
+        assert layout is not None, "Missing layout from parent Panel"
+        assert scene is not None, "Missing scene from context"
 
         props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         # This is the bake button
         row = layout.row()
-        row.operator(QuickBake_OT_bake.bl_idname)
+        row.operator(RENDER_OT_bake.bl_idname)
+        row.enabled = not RENDER_OT_bake.active
 
-        row = layout.row()
-        row.prop(props, 'bake_name')
+        if RENDER_OT_bake.active:
+            layout.progress(text=f"{RENDER_OT_bake.progress}%", factor=0.0)
 
-        row = layout.row()
-        row.prop(props, 'bake_uv')
+        layout.prop(props, "bake_name")
+
+        # col = layout.column(align=True)
+        # split = col.split(factor=0.25, align=True)
+        # split.label(text="Name")
+        # split.prop(props, "bake_name", text="")
+
+        layout.prop(props, "bake_uv")
         # Probably not useful, select from list of existing uv maps
         # me = context.object.data
         # row.template_list("MESH_UL_uvmaps", "uvmaps", me, "uv_layers", me.uv_layers, "active_index", rows=2)
 
-        row = layout.row()
-        row.prop(props, 'bake_size')
+        layout.prop(props, "bake_size")
+
+        # row = layout.row()
+        # row.prop(props, "combine_arm")
+
+        layout.prop(props, "save_mode")
 
         row = layout.row()
-        row.prop(props, 'combine_arm')
+        row.enabled = props.save_mode == SaveMode.EXTERNAL
+        row.prop(props, "save_path")
 
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, 'save_img')
+        layout.prop(props, "bake_mode")
 
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, 'image_path')
+        # layout.prop(props, "create_mat")
 
-        layout.separator()
-        layout.label(text='Material')
-        row = layout.row()
-        row.prop(props, 'create_mat')
-
-        row = layout.row()
-        row.prop(props, 'mat_name')
+        # row = layout.row()
+        # row.enabled = props.create_mat
+        # row.prop(props, "replace_mat")
 
         layout.separator()
-        layout.label(text='Layers')
-        row = layout.row()
-        row.prop(props, 'diffuse_enabled')
+        layout.label(text="Layers")
 
-        row = layout.row()
-        row.prop(props, 'roughness_enabled')
-
-        row = layout.row()
-        row.prop(props, 'normal_enabled')
-
-        row = layout.row()
-        row.prop(props, 'metallic_enabled')
+        layout.prop(props, "diffuse_enabled")
+        layout.prop(props, "roughness_enabled")
+        layout.prop(props, "normal_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'clearcoat_enabled')
+        row.prop(props, "metallic_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'anisotropic_enabled')
+        row.prop(props, "clearcoat_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'ao_enabled')
+        row.prop(props, "anisotropic_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'shadow_enabled')
+        row.prop(props, "ao_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'height_enabled')
+        row.prop(props, "shadow_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'emit_enabled')
+        row.prop(props, "height_enabled")
 
         row = layout.row()
         row.enabled = False
-        row.prop(props, 'transmission_enabled')
+        row.prop(props, "emit_enabled")
 
         row = layout.row()
+        row.enabled = False
+        row.prop(props, "transmission_enabled")
