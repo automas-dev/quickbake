@@ -1,1 +1,0 @@
-"""Material helper functions."""

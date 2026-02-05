@@ -2,7 +2,6 @@
 
 import bpy
 from .op import RENDER_OT_bake
-from .properties import SaveMode
 
 
 class RENDER_PT_main(bpy.types.Panel):
@@ -27,43 +26,16 @@ class RENDER_PT_main(bpy.types.Panel):
         props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         # This is the bake button
-        row = layout.row()
-        row.operator(RENDER_OT_bake.bl_idname)
-        row.enabled = not RENDER_OT_bake.active
-
-        if RENDER_OT_bake.active:
-            layout.progress(text=f"{RENDER_OT_bake.progress}%", factor=0.0)
+        layout.operator(RENDER_OT_bake.bl_idname)
 
         layout.prop(props, "bake_name")
-
-        # col = layout.column(align=True)
-        # split = col.split(factor=0.25, align=True)
-        # split.label(text="Name")
-        # split.prop(props, "bake_name", text="")
-
-        layout.prop(props, "bake_uv")
-        # Probably not useful, select from list of existing uv maps
-        # me = context.object.data
-        # row.template_list("MESH_UL_uvmaps", "uvmaps", me, "uv_layers", me.uv_layers, "active_index", rows=2)
-
         layout.prop(props, "bake_size")
-
-        # row = layout.row()
-        # row.prop(props, "combine_arm")
-
-        layout.prop(props, "save_mode")
+        layout.prop(props, "use_mat")
+        layout.prop(props, "save_img")
 
         row = layout.row()
-        row.enabled = props.save_mode == SaveMode.EXTERNAL
+        row.enabled = props.save_img
         row.prop(props, "save_path")
-
-        layout.prop(props, "bake_mode")
-
-        # layout.prop(props, "create_mat")
-
-        # row = layout.row()
-        # row.enabled = props.create_mat
-        # row.prop(props, "replace_mat")
 
         layout.separator()
         layout.label(text="Layers")
@@ -71,35 +43,11 @@ class RENDER_PT_main(bpy.types.Panel):
         layout.prop(props, "diffuse_enabled")
         layout.prop(props, "roughness_enabled")
         layout.prop(props, "normal_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "metallic_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "clearcoat_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "anisotropic_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "ao_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "shadow_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "height_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "emit_enabled")
-
-        row = layout.row()
-        row.enabled = False
-        row.prop(props, "transmission_enabled")
+        layout.prop(props, "glossy_enabled")
+        layout.prop(props, "transmission_enabled")
+        layout.prop(props, "emit_enabled")
+        layout.prop(props, "ao_enabled")
+        layout.prop(props, "shadow_enabled")
+        layout.prop(props, "environment_enabled")
+        layout.prop(props, "position_enabled")
+        layout.prop(props, "uv_enabled")
