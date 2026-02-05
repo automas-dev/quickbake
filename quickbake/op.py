@@ -1,153 +1,296 @@
 # import os
-import logging
+import typing
 
 import bpy
+from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 
-from .bake import cleanup_bake_nodes, setup_bake_image, setup_bake_nodes, setup_bake_uv
-from .material import setup_bake_material
-
-_l = logging.getLogger(__name__)
+if typing.TYPE_CHECKING:
+    from .properties import QuickBakeToolPropertyGroup
 
 
-class QuickBake_OT_bake(bpy.types.Operator):
+class RENDER_OT_bake(bpy.types.Operator):
     """Do the bake."""
 
-    bl_idname = 'render.quickbake_bake'
-    bl_label = 'Bake'
-    bl_options = {'REGISTER', 'UNDO'}
+    # Blender fields
 
-    # material:
+    bl_idname = "render.quickbake_bake"
+    bl_label = "Bake"
+    bl_options = {"REGISTER", "UNDO"}
+
+    input_order = [
+        "DIFFUSE",
+        "ROUGHNESS",
+        "NORMAL",
+        "GLOSSY",
+        "TRANSMISSION",
+        "EMIT",
+        "AO",
+        "SHADOW",
+        "ENVIRONMENT",
+        "POSITION",
+        "UV",
+    ]
+
+    layer_input_map = {
+        "DIFFUSE": "Base Color",
+        "ROUGHNESS": "Roughness",
+        "NORMAL": "Normal",
+        # "GLOSSY": "",
+        "TRANSMISSION": "Transmission Weight",
+        "EMIT": "Emission Color",
+        # "AO": "",
+        # "SHADOW": "",
+        # "ENVIRONMENT": "",
+        # "POSITION": "",
+        # "UV": "",
+    }
 
     @classmethod
     def poll(cls, context):
-        obj: bpy.types.Object = context.active_object  # type: ignore
-        return obj is not None and obj.type == 'MESH'
+        """Disable baking until a mesh object is selected."""
+        obj = context.active_object
+        return obj is not None and obj.type == "MESH"
 
-    def create_material(
-        self, obj, name, uv_name, diffuse=None, roughness=None, normal=None
-    ):
-        _l.info('Creating bake material %s for object %s', name, obj.name)
+    def execute(self, context: bpy.types.Context):
+        # Keeping type hints happy, should not be possible
+        scene = context.scene
+        assert scene is not None, "Context must have a scene, got None"
 
-        mat = bpy.data.materials.get(name)
-        if mat is not None:
-            _l.debug('Material already exists, skipping')
-            self.report({'INFO'}, 'Material already exists, skipping')
-            return mat
+        # Make sure cycles is the current render engine
+        if scene.render.engine != "CYCLES":
+            scene.render.engine = "CYCLES"  # type: ignore
+            self.report({"WARNING"}, "Changed render engine to Cycles")
 
-        mat = setup_bake_material(obj, name, uv_name, diffuse, roughness, normal)
-        return mat
+        scene.render.use_lock_interface = True
 
-    def execute(self, context):
+        # Get the object to bake
         obj = context.active_object
 
+        # This should be enforces by cls.poll() but is here to be sure
         if obj is None:
-            self.report({'ERROR'}, 'No active object')
-            return {'CANCELLED'}
+            self.report({"ERROR"}, "No active object")
+            return {"CANCELLED"}  # canceled because nothing was altered / needs undo
 
-        if obj.type != 'MESH':
-            self.report({'ERROR'}, 'Active object must be a mesh')
-            return {'CANCELLED'}
+        # This should be enforces by cls.poll() but is here to be sure
+        if obj.type != "MESH":
+            self.report({"ERROR"}, "Active object must be a mesh")
+            return {"CANCELLED"}  # canceled because nothing was altered / needs undo
 
-        props = context.scene.QuickBakeToolPropertyGroup
+        # Setup passes for each enabled layer
+        props: QuickBakeToolPropertyGroup
+        props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
-        bake_nodes = setup_bake_nodes(obj)
-        # bake_uv = setup_bake_uv(obj, props.bake_uv)
-        setup_bake_uv(obj, props.bake_uv)
-
+        # layer name : is data
         passes = []
         if props.diffuse_enabled:
-            passes.append('DIFFUSE')
-        if props.normal_enabled:
-            passes.append('NORMAL')
+            passes.append(("DIFFUSE", False))
         if props.roughness_enabled:
-            passes.append('ROUGHNESS')
-        if props.ao_enabled:
-            passes.append('AO')
-        if props.shadow_enabled:
-            passes.append('SHADOW')
-        if props.position_enabled:
-            passes.append('POSITION')
-        if props.uv_enabled:
-            passes.append('UV')
-        if props.emit_enabled:
-            passes.append('EMIT')
-        if props.environment_enabled:
-            passes.append('ENVIRONMENT')
+            passes.append(("ROUGHNESS", False))
+        if props.normal_enabled:
+            passes.append(("NORMAL", True))
         if props.glossy_enabled:
-            passes.append('GLOSSY')
+            passes.append(("GLOSSY", False))
         if props.transmission_enabled:
-            passes.append('TRANSMISSION')
+            passes.append(("TRANSMISSION", False))
+        if props.emit_enabled:
+            passes.append(("EMIT", False))
+        if props.ao_enabled:
+            passes.append(("AO", False))
+        if props.shadow_enabled:
+            passes.append(("SHADOW", False))
+        if props.environment_enabled:
+            passes.append(("ENVIRONMENT", False))
+        if props.position_enabled:
+            passes.append(("POSITION", True))
+        if props.uv_enabled:
+            passes.append(("UV", True))
 
-        _l.debug('Enabled bake passes: %s', repr(passes))
+        # Keeping type hints happy
+        assert isinstance(obj.data, bpy.types.Mesh), "Object is not a mesh"
+        mesh = obj.data
 
-        img_cache = {}
+        uv_layer = self.unwrap_object(mesh)
+        bake_nodes = self.create_image_nodes(mesh)
+        images = {}
 
-        for pass_type in passes:
-            _l.info('Baking pass %s', pass_type)
+        for layer, is_data in passes:
+            self.report({"INFO"}, f"Starting layer {layer}")
 
-            img = setup_bake_image(
-                obj,
-                bake_nodes,
-                props.bake_name,
-                props.bake_size,
-                pass_type.lower(),
-                props.reuse_tex,
-                pass_type == 'NORMAL',
-            )
+            image_name = f"{props.bake_name}_{layer.lower()}"
 
-            img_cache[pass_type] = img
+            # Create image or use existing
+            img = bpy.data.images.get(image_name)
+            if img is None:
+                img = bpy.data.images.new(
+                    image_name, props.bake_size, props.bake_size, is_data=is_data
+                )
+            images[layer] = img
 
-            self.report({'INFO'}, 'Baking pass %s' % pass_type)
+            # Assign image to bake node in all materials
+            for mat, texture_node in bake_nodes:
+                # TODO type ignore if it works
+                texture_node.image = img  # type: ignore
+                texture_node.select = True
+                mat.node_tree.nodes.active = texture_node  # type: ignore
+                # nodes.active = texture_node  # TODO per material
 
-            _l.debug('Making object %s active', obj.name)
-            bpy.context.view_layer.objects.active = obj
-
-            save_mode = 'INTERNAL'
-            # filepath = ''
-
-            # if props.save_img:
-            #     _l.debug('Saving image externally')
-
-            #     img_base_path = bpy.path.abspath(props.image_path)
-
-            #     save_mode = 'EXTERNAL'
-            #     filepath = os.path.join(img_base_path, img.name + '.png')
-            #     _l.debug('Filepath %s', filepath)
-
-            self.report({'INFO'}, 'Save mode %s' % save_mode)
+            filepath = ""
+            save_mode = "INTERNAL"
+            if props.save_img:
+                filepath = f"{props.save_path}/{props.bake_name}_{layer}"
+                save_mode = "EXTERNAL"
 
             bpy.ops.object.bake(
-                type=pass_type,
-                pass_filter={'COLOR'},
-                uv_layer='bake_uv',
+                type=layer,  # type: ignore
+                pass_filter={"COLOR"},  # TODO change this for other textures
+                uv_layer=uv_layer.name,
                 use_clear=True,
-                # save_mode='INTERNAL',
-                # save_mode=save_mode,
-                # filepath=filepath,
+                save_mode=save_mode,
+                filepath=filepath,
             )
 
-            # if props.save_img:
-            #     _l.debug('Saving image externally %s', img.name)
+        self.cleanup_image_nodes(mesh)
 
-            #     # filepath = os.path.join(props.image_path, img.name + '.png')
-            #     img.filepath = filepath
-            #     img.file_format = 'PNG'
-            #     # img.save_render(filepath=filepath)
-            #     img.save()
+        # Create Material
+        mat = bpy.data.materials.get(props.bake_name)
+        if mat is None:
+            mat = bpy.data.materials.new(props.bake_name)
+            mat.use_nodes = True
 
-        self.report({'INFO'}, 'Baking complete')
+        # Get shader node (create if not exist)
+        principled_mat = PrincipledBSDFWrapper(mat, is_readonly=False)  # pyright: ignore[reportCallIssue]
+        principled_node = principled_mat.node_principled_bsdf
 
-        if props.clean_up and not props.create_mat:
-            cleanup_bake_nodes(obj)
+        # Keeping type hints happy
+        assert mat.node_tree is not None
 
-        if props.create_mat:
-            self.create_material(
-                obj,
-                props.mat_name,
-                props.bake_uv,
-                img_cache.get('DIFFUSE'),
-                img_cache.get('ROUGHNESS'),
-                img_cache.get('NORMAL'),
-            )
+        shader_nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
 
-        return {'FINISHED'}
+        # Texture coordinate node for uv map
+        uv_node = shader_nodes.get("Texture Coordinate")
+        if uv_node is None:
+            uv_node = shader_nodes.new(type="ShaderNodeUVMap")
+            uv_node.location.x = -1100
+        uv_node.uv_map = uv_layer.name  # type: ignore
+
+        # Mapping node for position, scale, rotation
+        mapping_node = shader_nodes.get("Texture Coordinate")
+        if mapping_node is None:
+            mapping_node = shader_nodes.new(type="ShaderNodeMapping")
+            mapping_node.location.x = -900
+
+        # Link uv coordinates to mapping node
+        links.new(uv_node.outputs["UV"], mapping_node.inputs["Vector"])
+
+        for layer, _ in passes:
+            y = 0
+            if layer in self.input_order:
+                y = (self.input_order.index(layer) - 1) * -300
+
+            tex_node = mat.node_tree.get(layer)
+            if tex_node is None:
+                tex_node = shader_nodes.new(type="ShaderNodeTexImage")
+                tex_node.location.x = -700
+                tex_node.location.y = y
+
+            tex_node.image = images[layer]  # type: ignore
+            links.new(mapping_node.outputs["Vector"], tex_node.inputs["Vector"])
+
+            shader_input = self.layer_input_map.get(layer, "")
+            if shader_input:
+                if layer == "NORMAL":
+                    normal_map_node = shader_nodes.get("Normal Map")
+                    if normal_map_node is None:
+                        normal_map_node = shader_nodes.new(type="ShaderNodeNormalMap")
+                        normal_map_node.location.x = -400
+                        normal_map_node.location.y = y
+
+                    links.new(
+                        tex_node.outputs["Color"], normal_map_node.inputs["Color"]
+                    )
+                    links.new(
+                        normal_map_node.outputs["Normal"],
+                        principled_node.inputs[shader_input],
+                    )
+
+                else:
+                    links.new(
+                        tex_node.outputs["Color"], principled_node.inputs[shader_input]
+                    )
+
+        # Assign material to object
+        if props.use_mat:
+            obj.active_material = mat
+
+        return {"FINISHED"}
+
+    def unwrap_object(self, mesh: bpy.types.Mesh) -> bpy.types.MeshUVLoopLayer:
+        uv_name = "bake_uv"
+
+        # Use existing or create new uv layer for baking
+        bake_uv = mesh.uv_layers.get(uv_name)
+        if bake_uv is None:
+            bake_uv = mesh.uv_layers.new(name=uv_name)
+
+        # Store currently active layer
+        active_layer = None
+        for layer in mesh.uv_layers:
+            if layer.active:
+                active_layer = layer
+                break
+
+        # Unwrap the object
+        bake_uv.active = True
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.uv.smart_project(island_margin=0.001)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bake_uv.active = False
+
+        # Restore active layer
+        if active_layer is not None:
+            active_layer.active = True
+
+        return bake_uv
+
+    # TODO node is being created multiple times
+    def create_image_nodes(
+        self, mesh: bpy.types.Mesh
+    ) -> list[tuple[bpy.types.Material, bpy.types.Node]]:
+        node_name = "bake_image"
+
+        null_count = 0
+        image_nodes = []
+
+        for mat in mesh.materials:
+            if mat is None or mat.node_tree is None:
+                null_count += 1
+                continue
+
+            # Enable nodes if not already
+            mat.use_nodes = True
+
+            texture_node = mat.node_tree.get(node_name)
+            if texture_node is None:
+                texture_node = mat.node_tree.nodes.new("ShaderNodeTexImage")
+                texture_node.name = node_name
+
+            image_nodes.append((mat, texture_node))
+
+        # Notify user if any materials were unusable
+        if null_count > 0:
+            self.report({"WARNING"}, f"Mesh {mesh.name} has {null_count} null material")
+
+        return image_nodes
+
+    def cleanup_image_nodes(self, mesh: bpy.types.Mesh):
+        node_name = "bake_image"
+
+        for mat in mesh.materials:
+            if mat is None or mat.node_tree is None:
+                continue
+
+            node = mat.node_tree.get(node_name)
+            if node is not None:
+                mat.node_tree.nodes.remove(node)

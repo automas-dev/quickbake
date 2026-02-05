@@ -1,14 +1,9 @@
 [project]
 name = "quickbake"
-version = "0.1.0"
-description = "Fast baking for blender"
-readme = "README.md"
-authors = [{ name = "Thomas Harrison", email = "theharrisoncrafter@gmail.com" }]
+version = "0.9.0"
+description = "Python environment for testing and linting plugin code"
 requires-python = ">=3.12"
-dependencies = []
-
-[dependency-groups]
-dev = [
+dependencies = [
     "coverage>=7.13.2",
     "fake-bpy-module>=20260128",
     "pytest>=9.0.2",
@@ -18,10 +13,11 @@ dev = [
 
 [tool.ruff.lint]
 extend-select = ["I"]
-ignore = ["F401"]
+ignore = ["F401", "I001"]
 
 [tool.ruff.format]
-quote-style = "single"
+# bpy specifies this https://docs.blender.org/api/current/info_best_practice.html#style-conventions
+quote-style = "double"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

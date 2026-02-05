@@ -162,11 +162,9 @@ wheels = [
 
 [[package]]
 name = "quickbake"
-version = "0.1.0"
+version = "0.9.0"
 source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
+dependencies = [
     { name = "coverage" },
     { name = "fake-bpy-module" },
     { name = "pytest" },
@@ -175,9 +173,7 @@ dev = [
 ]
 
 [package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
+requires-dist = [
     { name = "coverage", specifier = ">=7.13.2" },
     { name = "fake-bpy-module", specifier = ">=20260128" },
     { name = "pytest", specifier = ">=9.0.2" },
