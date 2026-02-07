@@ -34,7 +34,7 @@ class RENDER_PT_main(bpy.types.Panel):
 
         row = layout.row()
         row.enabled = props.save_img
-        row.prop(props, "save_path")
+        row.prop(props, "save_path", text="")
 
         layout.separator()
         layout.label(text="Layers")
