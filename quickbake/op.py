@@ -154,7 +154,7 @@ class RENDER_OT_bake(bpy.types.Operator):
         mat = self.create_material(props, uv_layer, passes, images)
 
         # Duplicate object and assign material to new
-        if props.mat_mode == MaterialMode.COPY:
+        if props.mat_mode == MaterialMode.DUPLICATE:
             bpy.ops.object.duplicate()
             obj.hide_set(True)
             # Get new object
