@@ -29,7 +29,7 @@ class RENDER_PT_main(bpy.types.Panel):
 
         layout.prop(props, "bake_name")
         layout.prop(props, "bake_size")
-        layout.prop(props, "use_mat")
+        layout.prop(props, "mat_mode")
         layout.prop(props, "save_img")
 
         row = layout.row()

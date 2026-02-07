@@ -1,11 +1,7 @@
-# import os
-import typing
-
 import bpy
 from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 
-if typing.TYPE_CHECKING:
-    from .properties import QuickBakeToolPropertyGroup
+from .properties import MaterialMode, QuickBakeToolPropertyGroup
 
 
 class RENDER_OT_bake(bpy.types.Operator):
@@ -81,7 +77,7 @@ class RENDER_OT_bake(bpy.types.Operator):
         props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         # layer name : is data
-        passes = []
+        passes: list[tuple[str, bool]] = []
         if props.diffuse_enabled:
             passes.append(("DIFFUSE", False))
         if props.roughness_enabled:
@@ -151,76 +147,26 @@ class RENDER_OT_bake(bpy.types.Operator):
 
         self.cleanup_image_nodes(mesh)
 
-        # Create Material
-        mat = bpy.data.materials.get(props.bake_name)
-        if mat is None:
-            mat = bpy.data.materials.new(props.bake_name)
-            mat.use_nodes = True
+        # Only create images
+        if props.mat_mode == MaterialMode.IMAGES:
+            return {"FINISHED"}
 
-        # Get shader node (create if not exist)
-        principled_mat = PrincipledBSDFWrapper(mat, is_readonly=False)  # pyright: ignore[reportCallIssue]
-        principled_node = principled_mat.node_principled_bsdf
+        mat = self.create_material(props, uv_layer, passes, images)
 
-        # Keeping type hints happy
-        assert mat.node_tree is not None
+        # Duplicate object and assign material to new
+        if props.mat_mode == MaterialMode.COPY:
+            bpy.ops.object.duplicate()
+            obj.hide_set(True)
+            # Get new object
+            obj = context.active_object
 
-        shader_nodes = mat.node_tree.nodes
-        links = mat.node_tree.links
+            # Keeping type hints happy
+            assert obj is not None, "Object is None"
+            assert isinstance(obj.data, bpy.types.Mesh), "Object is not a mesh"
 
-        # Texture coordinate node for uv map
-        uv_node = shader_nodes.get("Texture Coordinate")
-        if uv_node is None:
-            uv_node = shader_nodes.new(type="ShaderNodeUVMap")
-            uv_node.location.x = -1100
-        uv_node.uv_map = uv_layer.name  # type: ignore
-
-        # Mapping node for position, scale, rotation
-        mapping_node = shader_nodes.get("Texture Coordinate")
-        if mapping_node is None:
-            mapping_node = shader_nodes.new(type="ShaderNodeMapping")
-            mapping_node.location.x = -900
-
-        # Link uv coordinates to mapping node
-        links.new(uv_node.outputs["UV"], mapping_node.inputs["Vector"])
-
-        for layer, _ in passes:
-            y = 0
-            if layer in self.input_order:
-                y = (self.input_order.index(layer) - 1) * -300
-
-            tex_node = mat.node_tree.get(layer)
-            if tex_node is None:
-                tex_node = shader_nodes.new(type="ShaderNodeTexImage")
-                tex_node.location.x = -700
-                tex_node.location.y = y
-
-            tex_node.image = images[layer]  # type: ignore
-            links.new(mapping_node.outputs["Vector"], tex_node.inputs["Vector"])
-
-            shader_input = self.layer_input_map.get(layer, "")
-            if shader_input:
-                if layer == "NORMAL":
-                    normal_map_node = shader_nodes.get("Normal Map")
-                    if normal_map_node is None:
-                        normal_map_node = shader_nodes.new(type="ShaderNodeNormalMap")
-                        normal_map_node.location.x = -400
-                        normal_map_node.location.y = y
-
-                    links.new(
-                        tex_node.outputs["Color"], normal_map_node.inputs["Color"]
-                    )
-                    links.new(
-                        normal_map_node.outputs["Normal"],
-                        principled_node.inputs[shader_input],
-                    )
-
-                else:
-                    links.new(
-                        tex_node.outputs["Color"], principled_node.inputs[shader_input]
-                    )
-
-        # Assign material to object
-        if props.use_mat:
+        # Assign or Copy
+        if props.mat_mode != MaterialMode.CREATE:
+            obj.data.materials.clear()
             obj.active_material = mat
 
         return {"FINISHED"}
@@ -294,3 +240,80 @@ class RENDER_OT_bake(bpy.types.Operator):
             node = mat.node_tree.get(node_name)
             if node is not None:
                 mat.node_tree.nodes.remove(node)
+
+    def create_material(
+        self,
+        props: QuickBakeToolPropertyGroup,
+        uv_layer: bpy.types.MeshUVLoopLayer,
+        passes: list[tuple[str, bool]],
+        images: dict,
+    ):
+        # Create Material
+        mat = bpy.data.materials.get(props.bake_name)
+        if mat is None:
+            mat = bpy.data.materials.new(props.bake_name)
+            mat.use_nodes = True
+
+        # Get shader node (create if not exist)
+        principled_mat = PrincipledBSDFWrapper(mat, is_readonly=False)  # pyright: ignore[reportCallIssue]
+        principled_node = principled_mat.node_principled_bsdf
+
+        # Keeping type hints happy
+        assert mat.node_tree is not None
+
+        shader_nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+
+        # Texture coordinate node for uv map
+        uv_node = shader_nodes.get("Texture Coordinate")
+        if uv_node is None:
+            uv_node = shader_nodes.new(type="ShaderNodeUVMap")
+            uv_node.location.x = -1100
+        uv_node.uv_map = uv_layer.name  # type: ignore
+
+        # Mapping node for position, scale, rotation
+        mapping_node = shader_nodes.get("Texture Coordinate")
+        if mapping_node is None:
+            mapping_node = shader_nodes.new(type="ShaderNodeMapping")
+            mapping_node.location.x = -900
+
+        # Link uv coordinates to mapping node
+        links.new(uv_node.outputs["UV"], mapping_node.inputs["Vector"])
+
+        for layer, _ in passes:
+            y = 0
+            if layer in self.input_order:
+                y = (self.input_order.index(layer) - 1) * -300
+
+            tex_node = mat.node_tree.get(layer)
+            if tex_node is None:
+                tex_node = shader_nodes.new(type="ShaderNodeTexImage")
+                tex_node.location.x = -700
+                tex_node.location.y = y
+
+            tex_node.image = images[layer]  # type: ignore
+            links.new(mapping_node.outputs["Vector"], tex_node.inputs["Vector"])
+
+            shader_input = self.layer_input_map.get(layer, "")
+            if shader_input:
+                if layer == "NORMAL":
+                    normal_map_node = shader_nodes.get("Normal Map")
+                    if normal_map_node is None:
+                        normal_map_node = shader_nodes.new(type="ShaderNodeNormalMap")
+                        normal_map_node.location.x = -400
+                        normal_map_node.location.y = y
+
+                    links.new(
+                        tex_node.outputs["Color"], normal_map_node.inputs["Color"]
+                    )
+                    links.new(
+                        normal_map_node.outputs["Normal"],
+                        principled_node.inputs[shader_input],
+                    )
+
+                else:
+                    links.new(
+                        tex_node.outputs["Color"], principled_node.inputs[shader_input]
+                    )
+
+        return mat
