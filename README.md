@@ -1,14 +1,15 @@
 # Quick Bake
 
-Sweet and simple baking in Blender.
+Quick and simple baking in Blender.
 
 **ToDo**
 
 - [ ] Add docs for how to download from release
-- [ ] Better docs for plugin / options / how outputs work
-- [ ] Proper docs site
 - [ ] Tests + Coverage
 - [ ] Can any blender extension code become more modern?
+- [ ] Show progress (wm cursor)
+- [ ] Render custom passes (eg. metallic) with emit channel
+- [ ] Replace all materials of multi material object with one
 
 ## Usage
 
@@ -16,37 +17,14 @@ Download this repo as a zip file and install through the Blender addons.
 
 ### Interface
 
-![](docs/panel.png)
+![Quickbake Interface](docs/panel.png)
 
-### Fields
+### Inputs
 
-Texture . Name
-
-- Prefix for all baked texture files
-- Texture files suffix is the layer name
-
-Texture . UV
-
-- Name of the UV layer to create use for baking
-- If the layer does not exist, it will be created with a smart unwrap
-
-Material . Create Material
-
-- Create a material with the baked textures
-- Only uses Diffuse, Normal and Roughness if enabled
-
-Material . Name
-
-- Name of the material to create if it does not exist
-
-Options . R-use Texture
-
-- Keep image node in each material used for the bake image between bakes
-
-Options. Clean Up
-
-- Remove nodes created for baking
-
-Layers
-
-- Image layers to bake
+| Field           | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| Name            | Name used for baked images and material                |
+| Size            | Bake image size in pixels                              |
+| Assign Material | Assign material with baked images to object after bake |
+| Save Images     | Save images to external directory                      |
+| Layers          | Enable baking of different layers, one image per layer |
