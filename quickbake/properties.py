@@ -53,7 +53,7 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
                 "Duplicate the object before assigning baked material",
             ),
         ],
-        default="ASSIGN",
+        default=MaterialMode.ASSIGN,
     )
 
     save_img: bpy.props.BoolProperty(
