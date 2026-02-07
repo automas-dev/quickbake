@@ -4,6 +4,13 @@ import bpy
 from enum import StrEnum
 
 
+class MaterialMode(StrEnum):
+    IMAGES = "IMAGES"
+    CREATE = "CREATE"
+    ASSIGN = "ASSIGN"
+    COPY = "COPY"
+
+
 class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
     # Bake
 
@@ -21,10 +28,32 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         step=1024,  # not yet implemented
     )
 
-    use_mat: bpy.props.BoolProperty(
-        name="Assign Material",
-        description="Assign new material with baked textures to the selected object",
-        default=True,
+    mat_mode: bpy.props.EnumProperty(
+        name="Mode",
+        description="What to do with images after baking",
+        items=[
+            (
+                MaterialMode.IMAGES,
+                "Image Only",
+                "Only generate images",
+            ),
+            (
+                MaterialMode.CREATE,
+                "Create Material",
+                "Create a new material with the baked images",
+            ),
+            (
+                MaterialMode.ASSIGN,
+                "Assign material",
+                "Assign the material to active object",
+            ),
+            (
+                MaterialMode.COPY,
+                "Copy Object",
+                "Make a copy of the object with baked material assigned",
+            ),
+        ],
+        default="ASSIGN",
     )
 
     save_img: bpy.props.BoolProperty(
