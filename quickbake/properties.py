@@ -8,7 +8,7 @@ class MaterialMode(StrEnum):
     IMAGES = "IMAGES"
     CREATE = "CREATE"
     ASSIGN = "ASSIGN"
-    COPY = "COPY"
+    DUPLICATE = "DUPLICATE"
 
 
 class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
@@ -44,16 +44,16 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
             ),
             (
                 MaterialMode.ASSIGN,
-                "Assign material",
+                "Assign Material",
                 "Assign the material to active object",
             ),
             (
-                MaterialMode.COPY,
-                "Copy Object",
-                "Make a copy of the object with baked material assigned",
+                MaterialMode.DUPLICATE,
+                "Duplicate Object",
+                "Duplicate the object before assigning baked material",
             ),
         ],
-        default="ASSIGN",
+        default=MaterialMode.ASSIGN,
     )
 
     save_img: bpy.props.BoolProperty(

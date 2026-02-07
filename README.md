@@ -21,10 +21,19 @@ Download this repo as a zip file and install through the Blender addons.
 
 ### Inputs
 
-| Field           | Description                                            |
-| --------------- | ------------------------------------------------------ |
-| Name            | Name used for baked images and material                |
-| Size            | Bake image size in pixels                              |
-| Assign Material | Assign material with baked images to object after bake |
-| Save Images     | Save images to external directory                      |
-| Layers          | Enable baking of different layers, one image per layer |
+| Field       | Description                                            |
+| ----------- | ------------------------------------------------------ |
+| Name        | Name used for baked images and material                |
+| Mode        | What to do with images after bake                      |
+| Size        | Bake image size in pixels                              |
+| Save Images | Save images to external directory                      |
+| Layers      | Enable baking of different layers, one image per layer |
+
+Mode has the following options
+
+| Mode            | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| Image Only      | Only generate images                                 |
+| Create Material | Create a new material with the baked images          |
+| Assign Material | Assign the material to active object                 |
+| Copy Object     | Duplicate the object before assigning baked material |
