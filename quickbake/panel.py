@@ -10,8 +10,7 @@ class RENDER_PT_main(bpy.types.Panel):
     bl_label = "Quick Bake"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    # bl_category = 'Tool'
-    bl_category = "Item"  # TODO revert this after testing
+    bl_category = "Tool"
     bl_context = "objectmode"
 
     def draw(self, context):
