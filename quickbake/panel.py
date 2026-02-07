@@ -24,17 +24,17 @@ class RENDER_PT_main(bpy.types.Panel):
 
         props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
-        # This is the bake button
-        layout.operator(RENDER_OT_bake.bl_idname)
-
         layout.prop(props, "bake_name")
-        layout.prop(props, "bake_size")
         layout.prop(props, "mat_mode")
+        layout.prop(props, "bake_size")
         layout.prop(props, "save_img")
 
         row = layout.row()
         row.enabled = props.save_img
         row.prop(props, "save_path", text="")
+
+        # This is the bake button
+        layout.operator(RENDER_OT_bake.bl_idname)
 
         layout.separator()
         layout.label(text="Layers")
