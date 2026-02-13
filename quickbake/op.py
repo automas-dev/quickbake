@@ -278,7 +278,7 @@ class RENDER_OT_bake(bpy.types.Operator):
                 _log.warning("Found null material in mesh %s", mesh.name)
                 continue
 
-            node = mat.node_tree.get(node_name)
+            node = mat.node_tree.nodes.get(node_name)
             if node is not None:
                 _log.debug("Removing node %s from material %s", node.name, mat.name)
                 mat.node_tree.nodes.remove(node)
