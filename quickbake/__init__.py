@@ -5,10 +5,14 @@ import bpy
 from .op import RENDER_OT_bake
 from .panel import RENDER_PT_main
 from .properties import QuickBakeToolPropertyGroup
+from .util import is_development
+
 
 _log = logging.getLogger(__name__)
-_log.setLevel(logging.DEBUG)
-_log.addHandler(logging.StreamHandler())
+
+if is_development():
+    _log.setLevel(logging.DEBUG)
+    _log.addHandler(logging.StreamHandler())
 
 
 def register():
