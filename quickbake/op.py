@@ -3,7 +3,9 @@ import logging
 import bpy
 from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 
+from .preferences import get_preferences
 from .properties import MaterialMode, QuickBakeToolPropertyGroup
+from .util import enable_logging, disable_logging, is_development
 
 _log = logging.getLogger(__name__)
 
@@ -52,6 +54,12 @@ class RENDER_OT_bake(bpy.types.Operator):
         return obj is not None and obj.type == "MESH"
 
     def execute(self, context: bpy.types.Context):
+        prefs = get_preferences(context)
+        if prefs.enable_logging or is_development():
+            enable_logging()
+        else:
+            disable_logging()
+
         _log.info("Begin execution")
 
         # Keeping type hints happy, should not be possible
