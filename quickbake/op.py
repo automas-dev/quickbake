@@ -178,10 +178,15 @@ class RENDER_OT_bake(bpy.types.Operator):
 
         # Duplicate object and assign material to new
         if props.mat_mode == MaterialMode.DUPLICATE:
+            _log.info("Duplicating object before assigning material")
             bpy.ops.object.duplicate()
+            _log.debug("Hiding original object %s", obj.name)
             obj.hide_set(True)
             # Get new object
             obj = context.active_object
+            _log.debug(
+                "New object is named %s", obj.name if obj is not None else "None"
+            )
 
             # Keeping type hints happy
             assert obj is not None, "Object is None"
@@ -189,9 +194,11 @@ class RENDER_OT_bake(bpy.types.Operator):
 
         # Assign or Copy
         if props.mat_mode != MaterialMode.CREATE:
+            _log.info("Assigning material %s to object %s", mat.name, obj.name)
             obj.data.materials.clear()
             obj.active_material = mat
 
+        _log.info("Finished execution")
         return {"FINISHED"}
 
     def unwrap_object(self, mesh: bpy.types.Mesh) -> bpy.types.MeshUVLoopLayer:
@@ -286,6 +293,10 @@ class RENDER_OT_bake(bpy.types.Operator):
                 _log.warning(
                     "Failed to find node %s in material %s", node_name, mat.name
                 )
+                _log.debug(
+                    "Material %s has nodes %s", mat.name, list(mat.node_tree.nodes)
+                )
+                self.report({"WARNING"}, f"Failed to cleanup material {mat.name}")
 
     def create_material(
         self,
