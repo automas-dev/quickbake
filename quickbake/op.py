@@ -118,7 +118,7 @@ class RENDER_OT_bake(bpy.types.Operator):
 
         uv_layer = self.unwrap_object(mesh)
         bake_nodes = self.create_image_nodes(mesh)
-        images = {}
+        images: dict[str, bpy.types.Image] = {}
 
         for layer, is_data in passes:
             _log.info("Starting layer %s", layer)
@@ -303,11 +303,12 @@ class RENDER_OT_bake(bpy.types.Operator):
         props: QuickBakeToolPropertyGroup,
         uv_layer: bpy.types.MeshUVLoopLayer,
         passes: list[tuple[str, bool]],
-        images: dict,
+        images: dict[str, bpy.types.Image],
     ):
         # Create Material
         mat = bpy.data.materials.get(props.bake_name)
         if mat is None:
+            _log.debug("Creating material %s", props.bake_name)
             mat = bpy.data.materials.new(props.bake_name)
             mat.use_nodes = True
 
@@ -324,6 +325,7 @@ class RENDER_OT_bake(bpy.types.Operator):
         # Texture coordinate node for uv map
         uv_node = shader_nodes.get("Texture Coordinate")
         if uv_node is None:
+            _log.debug("Creating uv node in material %s", mat.name)
             uv_node = shader_nodes.new(type="ShaderNodeUVMap")
             uv_node.location.x = -1100
         uv_node.uv_map = uv_layer.name  # type: ignore
@@ -331,6 +333,7 @@ class RENDER_OT_bake(bpy.types.Operator):
         # Mapping node for position, scale, rotation
         mapping_node = shader_nodes.get("Texture Coordinate")
         if mapping_node is None:
+            _log.debug("Creating mapping node in material %s", mat.name)
             mapping_node = shader_nodes.new(type="ShaderNodeMapping")
             mapping_node.location.x = -900
 
@@ -344,24 +347,50 @@ class RENDER_OT_bake(bpy.types.Operator):
 
             tex_node = mat.node_tree.get(layer)
             if tex_node is None:
+                _log.debug(
+                    "Creating image texture node for layer %s in material %s",
+                    layer,
+                    mat.name,
+                )
                 tex_node = shader_nodes.new(type="ShaderNodeTexImage")
                 tex_node.location.x = -700
                 tex_node.location.y = y
 
             tex_node.image = images[layer]  # type: ignore
+            _log.debug(
+                "Assigned image %s to image texture node %s",
+                images[layer].name,
+                tex_node.name,
+            )
             links.new(mapping_node.outputs["Vector"], tex_node.inputs["Vector"])
+            _log.debug(
+                "Linked mapping node %s output to image texture %s vector input",
+                mapping_node.name,
+                tex_node.name,
+            )
 
-            shader_input = self.layer_input_map.get(layer, "")
-            if shader_input:
+            if shader_input := self.layer_input_map.get(layer):
                 if layer == "NORMAL":
                     normal_map_node = shader_nodes.get("Normal Map")
                     if normal_map_node is None:
+                        _log.debug("Creating normal map node in material %s", mat.name)
                         normal_map_node = shader_nodes.new(type="ShaderNodeNormalMap")
                         normal_map_node.location.x = -400
                         normal_map_node.location.y = y
 
+                    _log.debug(
+                        "Linking image texture %s color output to normal map %s color input",
+                        tex_node.name,
+                        normal_map_node.name,
+                    )
                     links.new(
                         tex_node.outputs["Color"], normal_map_node.inputs["Color"]
+                    )
+
+                    _log.debug(
+                        "Linking normal map %s color output to shader %s input",
+                        normal_map_node.name,
+                        shader_input,
                     )
                     links.new(
                         normal_map_node.outputs["Normal"],
@@ -369,6 +398,11 @@ class RENDER_OT_bake(bpy.types.Operator):
                     )
 
                 else:
+                    _log.debug(
+                        "Connecting layer image texture for layer %s to shader input %s",
+                        layer,
+                        shader_input,
+                    )
                     links.new(
                         tex_node.outputs["Color"], principled_node.inputs[shader_input]
                     )
