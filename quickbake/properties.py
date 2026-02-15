@@ -95,6 +95,12 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         name="Emission", description="Bake the Emission map", default=False
     )
 
+    emit_strength: bpy.props.FloatProperty(
+        name="Emission Strength",
+        description="Shader strength of emissions",
+        default=1.0,
+    )
+
     ao_enabled: bpy.props.BoolProperty(
         name="Ambient Occlusion",
         description="Bake the Ambient Occlusion map",

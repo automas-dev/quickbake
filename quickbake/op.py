@@ -418,4 +418,9 @@ class RENDER_OT_bake(bpy.types.Operator):
                         tex_node.outputs["Color"], principled_node.inputs[shader_input]
                     )
 
+                    if layer == "EMIT":
+                        principled_node.inputs[
+                            "Emission Strength"
+                        ].default_value = self.props.emit_strength
+
         return mat
