@@ -3,7 +3,7 @@ import logging
 import bpy
 from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 
-from .preferences import get_preferences
+from .preferences import get_preferences, QuickBakeAddonPreferences
 from .properties import MaterialMode, QuickBakeToolPropertyGroup
 from .util import enable_logging, disable_logging, is_development
 
@@ -47,6 +47,11 @@ class RENDER_OT_bake(bpy.types.Operator):
         # "UV": "",
     }
 
+    # Fields used during execution, these get cleared between executions
+
+    prefs: QuickBakeAddonPreferences
+    props: QuickBakeToolPropertyGroup
+
     @classmethod
     def poll(cls, context):
         """Disable baking until a mesh object is selected."""
@@ -54,8 +59,8 @@ class RENDER_OT_bake(bpy.types.Operator):
         return obj is not None and obj.type == "MESH"
 
     def execute(self, context: bpy.types.Context):
-        prefs = get_preferences(context)
-        if prefs.enable_logging or is_development():
+        self.prefs = get_preferences(context)
+        if self.prefs.enable_logging or is_development():
             enable_logging()
         else:
             disable_logging()
@@ -65,6 +70,9 @@ class RENDER_OT_bake(bpy.types.Operator):
         # Keeping type hints happy, should not be possible
         scene = context.scene
         assert scene is not None, "Context must have a scene, got None"
+
+        # Setup passes for each enabled layer
+        props = self.props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         # Make sure cycles is the current render engine
         if scene.render.engine != "CYCLES":
@@ -88,10 +96,6 @@ class RENDER_OT_bake(bpy.types.Operator):
             _log.error("Expected active object to be mesh, got %s", obj.type)
             self.report({"ERROR"}, "Active object must be a mesh")
             return {"CANCELLED"}  # canceled because nothing was altered / needs undo
-
-        # Setup passes for each enabled layer
-        props: QuickBakeToolPropertyGroup
-        props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         # layer name : is data
         passes: list[tuple[str, bool]] = []
@@ -182,7 +186,7 @@ class RENDER_OT_bake(bpy.types.Operator):
         if props.mat_mode == MaterialMode.IMAGES:
             return {"FINISHED"}
 
-        mat = self.create_material(props, uv_layer, passes, images)
+        mat = self.create_material(uv_layer, passes, images)
 
         # Duplicate object and assign material to new
         if props.mat_mode == MaterialMode.DUPLICATE:
@@ -308,16 +312,15 @@ class RENDER_OT_bake(bpy.types.Operator):
 
     def create_material(
         self,
-        props: QuickBakeToolPropertyGroup,
         uv_layer: bpy.types.MeshUVLoopLayer,
         passes: list[tuple[str, bool]],
         images: dict[str, bpy.types.Image],
     ):
         # Create Material
-        mat = bpy.data.materials.get(props.bake_name)
+        mat = bpy.data.materials.get(self.props.bake_name)
         if mat is None:
-            _log.debug("Creating material %s", props.bake_name)
-            mat = bpy.data.materials.new(props.bake_name)
+            _log.debug("Creating material %s", self.props.bake_name)
+            mat = bpy.data.materials.new(self.props.bake_name)
             mat.use_nodes = True
 
         # Get shader node (create if not exist)
