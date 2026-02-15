@@ -45,6 +45,8 @@ class RENDER_PT_main(bpy.types.Panel):
         layout.prop(props, "glossy_enabled")
         layout.prop(props, "transmission_enabled")
         layout.prop(props, "emit_enabled")
+        if props.emit_enabled:
+            layout.prop(props, "emit_strength")
         layout.prop(props, "ao_enabled")
         layout.prop(props, "shadow_enabled")
         layout.prop(props, "environment_enabled")
