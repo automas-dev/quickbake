@@ -214,16 +214,17 @@ class RENDER_OT_bake(bpy.types.Operator):
         return {"FINISHED"}
 
     def unwrap_object(self, mesh: bpy.types.Mesh) -> bpy.types.MeshUVLoopLayer:
-        uv_name = "bake_uv"
-        _log.debug("Unwrapping mesh %s with uv layer %s", mesh.name, uv_name)
+        _log.debug("Unwrapping mesh %s with uv layer %s", mesh.name, self.props.uv_name)
 
         # Use existing or create new uv layer for baking
-        bake_uv = mesh.uv_layers.get(uv_name)
+        bake_uv = mesh.uv_layers.get(self.props.uv_name)
         if bake_uv is None:
-            _log.info("Creating new uv layer %s", uv_name)
-            bake_uv = mesh.uv_layers.new(name=uv_name)
+            _log.info("Creating new uv layer %s", self.props.uv_name)
+            bake_uv = mesh.uv_layers.new(name=self.props.uv_name)
         else:
-            _log.debug("Reusing existing uv layer %s", uv_name)
+            _log.debug("Reusing existing uv layer %s", self.props.uv_name)
+            if not self.props.unwrap_object:
+                return bake_uv
 
         # Store currently active layer
         active_layer = None

@@ -25,8 +25,10 @@ class RENDER_PT_main(bpy.types.Panel):
         props = scene.QuickBakeToolPropertyGroup  # type: ignore
 
         layout.prop(props, "bake_name")
-        layout.prop(props, "mat_mode")
         layout.prop(props, "bake_size")
+        layout.prop(props, "uv_name")
+        layout.prop(props, "unwrap_object")
+        layout.prop(props, "mat_mode")
         layout.prop(props, "save_img")
 
         row = layout.row()
