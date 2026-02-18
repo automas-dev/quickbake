@@ -28,6 +28,21 @@ class QuickBakeToolPropertyGroup(bpy.types.PropertyGroup):
         step=1024,  # not yet implemented
     )
 
+    uv_name: bpy.props.StringProperty(
+        name="Bake UV",
+        description="UV layer name used for bake texture",
+        default="bake_uv",
+    )
+
+    unwrap_object: bpy.props.BoolProperty(
+        name="Unwrap Object",
+        description=(
+            "Unwrap object using smart project before baking. "
+            "If the uv layer does not exist, the object will be unwrapped regardless of this option."
+        ),
+        default=True,
+    )
+
     mat_mode: bpy.props.EnumProperty(
         name="Mode",
         description="What to do with images after baking",
